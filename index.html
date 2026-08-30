@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
   <title>Caleb’s Birthday RSVP</title>
   <style>
     :root { --max: 820px; }
@@ -30,9 +31,7 @@
       height:auto;
       background:#111827;
     }
-    .content{
-      padding: 16px;
-    }
+    .content{ padding: 16px; }
     h1{
       font-size: 20px;
       margin: 0 0 10px;
@@ -43,6 +42,16 @@
       opacity: 0.9;
       line-height: 1.35;
       font-size: 14px;
+    }
+    a{ color:#93c5fd; }
+    .event-details{
+      margin: 0 0 16px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.16);
+      font-size: 14px;
+      line-height: 1.5;
     }
     .grid{
       display:grid;
@@ -66,6 +75,10 @@
       font-size: 16px;
       box-sizing: border-box;
     }
+    input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible{
+      outline: 3px solid rgba(96,165,250,0.75);
+      outline-offset: 2px;
+    }
     textarea{
       min-height: 90px;
       resize: vertical;
@@ -76,9 +89,7 @@
       gap: 12px;
       grid-template-columns: 1fr 1fr;
     }
-    @media (max-width: 520px){
-      .row{ grid-template-columns: 1fr; }
-    }
+    @media (max-width: 520px){ .row{ grid-template-columns: 1fr; } }
     .btn{
       width: 100%;
       margin-top: 10px;
@@ -90,11 +101,14 @@
       font-size: 16px;
       cursor: pointer;
     }
-    .btn-primary{
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-    }
+    .btn-primary{ background: linear-gradient(135deg, #22c55e, #16a34a); }
     .btn-secondary{
       background: linear-gradient(135deg, #60a5fa, #2563eb);
+      margin-top: 6px;
+    }
+    .btn-tertiary{
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.16);
       margin-top: 6px;
     }
     .btn:disabled{
@@ -116,23 +130,47 @@
       opacity: 0.9;
       margin-top: 6px;
     }
+    .status{
+      display:none;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .status.show{ display:block; }
+    .fallback{
+      display:none;
+      margin-top: 10px;
+    }
+    .fallback.show{ display:block; }
+    .fallback textarea{ min-height: 120px; }
+    [hidden]{ display:none !important; }
   </style>
 </head>
 
 <body>
   <div class="wrap">
     <div class="card">
-      <!-- Placeholder image you asked for -->
-      <img class="hero" src="invitation.png" alt="Caleb’s Birthday Invitation" />
+      <img class="hero" src="invitation.png" alt="Caleb’s 7th birthday invitation" decoding="async" />
 
       <div class="content">
         <h1>RSVP for Caleb’s Birthday</h1>
-        <p>Fill this out and tap “Send RSVP” to open your text app with everything pre-filled. You can also add the event to your calendar.</p>
+        <p>Fill this out and tap “Send RSVP” to open your text app with everything pre-filled.</p>
+
+        <div class="event-details" aria-label="Event details">
+          <strong>Sunday, February 15, 2026 · 1:30–3:30 PM</strong><br />
+          Main Event Gilbert<br />
+          1735 S Santan Village Pkwy, Gilbert, AZ 85295<br />
+          <a href="https://www.google.com/maps/search/?api=1&query=1735%20S%20Santan%20Village%20Pkwy%2C%20Gilbert%2C%20AZ%2085295" target="_blank" rel="noopener noreferrer">Open location in Google Maps</a>
+        </div>
 
         <form id="rsvpForm" class="grid" autocomplete="on">
           <div>
             <label for="parentName">Parent / Guardian name</label>
-            <input id="parentName" name="parentName" type="text" placeholder="Your name" required />
+            <input id="parentName" name="parentName" type="text" placeholder="Your name" autocomplete="name" required />
           </div>
 
           <div class="row">
@@ -145,17 +183,17 @@
               </select>
             </div>
 
-            <div>
+            <div id="kidsWrap" hidden>
               <label for="kidsCount">How many kids attending?</label>
               <select id="kidsCount" name="kidsCount" disabled>
-                <option value="0" selected>0</option>
+                <option value="" selected disabled>Select…</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
                 <option value="4">4</option>
                 <option value="5">5</option>
               </select>
-              <div class="pill" id="kidsHint">Enabled only if attending “Yes”.</div>
+              <div class="pill">Required when attending.</div>
             </div>
           </div>
 
@@ -165,10 +203,18 @@
           </div>
 
           <button class="btn btn-primary" id="sendBtn" type="submit">Send RSVP (Text Melissa)</button>
+          <button class="btn btn-tertiary" id="copyBtn" type="button">Copy RSVP Text</button>
           <button class="btn btn-secondary" id="calBtn" type="button">Add to Calendar</button>
 
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+
+          <div id="smsFallback" class="fallback" aria-live="polite">
+            <label for="fallbackText">If Messages did not open, copy this RSVP:</label>
+            <textarea id="fallbackText" readonly></textarea>
+          </div>
+
           <div class="fine">
-            If your phone doesn’t support auto-opening SMS links, it will still show the message so you can copy/paste.
+            Your RSVP is not stored on this website. Tapping “Send RSVP” opens your phone’s messaging app with the response pre-filled.
           </div>
         </form>
       </div>
@@ -177,55 +223,54 @@
 
   <script>
     (function () {
-      // ---- RSVP SMS CONFIG ----
-      const SMS_NUMBER = "15152381796"; // Melissa (515) 238-1796 (digits only)
+      const SMS_NUMBER = "15152381796";
 
-      // ---- EVENT DETAILS (edit here if needed) ----
-      // NOTE: These are set for the invite shown: Sunday, Feb 15, 1:30pm–3:30pm in Gilbert, AZ.
-      // If the year changes, update EVENT_YEAR below.
-      const EVENT_YEAR = 2026; // <-- change if needed
+      const EVENT_YEAR = 2026;
+      const EVENT_MONTH = 2;
+      const EVENT_DAY = 15;
+      const START_HOUR_24 = 13;
+      const START_MIN = 30;
+      const END_HOUR_24 = 15;
+      const END_MIN = 30;
+      const EVENT_TIMEZONE = "America/Phoenix";
 
       const EVENT_TITLE = "Caleb’s 7th Birthday Party";
-      const EVENT_LOCATION = "Main Event, Gilbert, AZ";
-      const EVENT_DESCRIPTION = "Caleb’s Birthday Party at Main Event in Gilbert, AZ.";
+      const EVENT_LOCATION = "Main Event Gilbert, 1735 S Santan Village Pkwy, Gilbert, AZ 85295";
+      const EVENT_DESCRIPTION = "Caleb’s Birthday Party at Main Event Gilbert.";
 
-      // Local time: 1:30pm–3:30pm (Arizona). We'll store as floating local times in ICS.
-      // Most phones will interpret these in the device timezone; for AZ folks this is typically perfect.
-      const EVENT_MONTH = 2; // February
-      const EVENT_DAY = 15;
-      const START_HOUR_24 = 13; // 1:30pm
-      const START_MIN = 30;
-      const END_HOUR_24 = 15;   // 3:30pm
-      const END_MIN = 30;
-
-      // ---- DOM ----
       const form = document.getElementById("rsvpForm");
       const parentName = document.getElementById("parentName");
       const attending = document.getElementById("attending");
+      const kidsWrap = document.getElementById("kidsWrap");
       const kidsCount = document.getElementById("kidsCount");
       const notes = document.getElementById("notes");
+      const copyBtn = document.getElementById("copyBtn");
       const calBtn = document.getElementById("calBtn");
+      const status = document.getElementById("status");
+      const smsFallback = document.getElementById("smsFallback");
+      const fallbackText = document.getElementById("fallbackText");
+
+      function setStatus(message) {
+        status.textContent = message;
+        status.classList.toggle("show", Boolean(message));
+      }
 
       function updateKidsEnabled() {
         const yes = attending.value === "Yes";
+        kidsWrap.hidden = !yes;
         kidsCount.disabled = !yes;
-        if (!yes) kidsCount.value = "0";
+        kidsCount.required = yes;
+        if (!yes) kidsCount.value = "";
       }
       attending.addEventListener("change", updateKidsEnabled);
 
-      // ---- SMS RSVP ----
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-
+      function getRsvpText() {
         const name = (parentName.value || "").trim();
         const going = attending.value;
         const kids = kidsCount.value;
         const noteText = (notes.value || "").trim();
 
-        if (!name || !going) {
-          alert("Please enter your name and select whether you’re coming.");
-          return;
-        }
+        if (!name || !going || (going === "Yes" && !kids)) return null;
 
         const lines = [
           "Caleb’s Birthday RSVP",
@@ -235,23 +280,61 @@
         ];
 
         if (noteText) lines.push(`Notes: ${noteText}`);
+        return lines.join("\n");
+      }
 
-        const body = encodeURIComponent(lines.join("\n"));
+      function validateRsvp() {
+        if (!form.reportValidity()) return false;
+        if (attending.value === "Yes" && !kidsCount.value) {
+          kidsCount.focus();
+          setStatus("Please select how many kids are attending.");
+          return false;
+        }
+        return true;
+      }
 
-        // Works on most iOS/Android devices:
+      async function copyRsvpText() {
+        if (!validateRsvp()) return;
+        const text = getRsvpText();
+        if (!text) return;
+
+        fallbackText.value = text;
+        smsFallback.classList.add("show");
+
+        try {
+          await navigator.clipboard.writeText(text);
+          setStatus("RSVP text copied to your clipboard.");
+        } catch (_) {
+          fallbackText.focus();
+          fallbackText.select();
+          setStatus("Copy the RSVP text shown below.");
+        }
+      }
+
+      copyBtn.addEventListener("click", copyRsvpText);
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (!validateRsvp()) return;
+
+        const text = getRsvpText();
+        if (!text) return;
+
+        fallbackText.value = text;
+        smsFallback.classList.add("show");
+        setStatus("Opening your messaging app. If it does not open, copy the RSVP shown below.");
+
+        const body = encodeURIComponent(text);
         const smsLink = `sms:${SMS_NUMBER}?body=${body}`;
         window.location.href = smsLink;
       });
 
-      // ---- ICS GENERATION ----
       function pad2(n){ return String(n).padStart(2, "0"); }
 
-      // Format: YYYYMMDDTHHMMSS
       function formatLocalDateTime(y, m, d, hh, mm, ss=0){
         return `${y}${pad2(m)}${pad2(d)}T${pad2(hh)}${pad2(mm)}${pad2(ss)}`;
       }
 
-      // Basic escaping for ICS text fields
       function icsEscape(text){
         return String(text || "")
           .replace(/\\/g, "\\\\")
@@ -260,14 +343,22 @@
           .replace(/;/g, "\\;");
       }
 
+      function eventHasPassed() {
+        // Arizona remains UTC-7 year-round. This event occurred in February 2026.
+        const eventEndUtc = Date.UTC(EVENT_YEAR, EVENT_MONTH - 1, EVENT_DAY, END_HOUR_24 + 7, END_MIN, 0);
+        return Date.now() > eventEndUtc;
+      }
+
       function downloadICS() {
+        if (eventHasPassed()) {
+          setStatus("This event has already passed, so it can no longer be added to your calendar.");
+          return;
+        }
+
         const dtStart = formatLocalDateTime(EVENT_YEAR, EVENT_MONTH, EVENT_DAY, START_HOUR_24, START_MIN, 0);
-        const dtEnd   = formatLocalDateTime(EVENT_YEAR, EVENT_MONTH, EVENT_DAY, END_HOUR_24, END_MIN, 0);
+        const dtEnd = formatLocalDateTime(EVENT_YEAR, EVENT_MONTH, EVENT_DAY, END_HOUR_24, END_MIN, 0);
+        const uid = `caleb-bday-${EVENT_YEAR}${pad2(EVENT_MONTH)}${pad2(EVENT_DAY)}@birthday-rsvp`;
 
-        // UID should be unique; keep it stable-ish for this page instance
-        const uid = `caleb-bday-${EVENT_YEAR}${pad2(EVENT_MONTH)}${pad2(EVENT_DAY)}-${Math.random().toString(16).slice(2)}@rsvp`;
-
-        // DTSTAMP in UTC is recommended
         const now = new Date();
         const dtStamp =
           now.getUTCFullYear() +
@@ -278,38 +369,27 @@
           pad2(now.getUTCSeconds()) + "Z";
 
         const ics =
-`BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Caleb RSVP//EN
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-BEGIN:VEVENT
-UID:${uid}
-DTSTAMP:${dtStamp}
-DTSTART:${dtStart}
-DTEND:${dtEnd}
-SUMMARY:${icsEscape(EVENT_TITLE)}
-LOCATION:${icsEscape(EVENT_LOCATION)}
-DESCRIPTION:${icsEscape(EVENT_DESCRIPTION)}
-END:VEVENT
-END:VCALENDAR`;
+`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Caleb RSVP//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nBEGIN:VEVENT\r\nUID:${uid}\r\nDTSTAMP:${dtStamp}\r\nDTSTART;TZID=${EVENT_TIMEZONE}:${dtStart}\r\nDTEND;TZID=${EVENT_TIMEZONE}:${dtEnd}\r\nSUMMARY:${icsEscape(EVENT_TITLE)}\r\nLOCATION:${icsEscape(EVENT_LOCATION)}\r\nDESCRIPTION:${icsEscape(EVENT_DESCRIPTION)}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
 
         const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
         const url = URL.createObjectURL(blob);
-
         const a = document.createElement("a");
         a.href = url;
         a.download = `Caleb_Birthday_${EVENT_YEAR}.ics`;
         document.body.appendChild(a);
         a.click();
         a.remove();
-
         setTimeout(() => URL.revokeObjectURL(url), 1500);
+        setStatus("Calendar file created using the America/Phoenix timezone.");
       }
 
       calBtn.addEventListener("click", downloadICS);
 
-      // Initialize
+      if (eventHasPassed()) {
+        calBtn.disabled = true;
+        calBtn.textContent = "Event Has Passed";
+      }
+
       updateKidsEnabled();
     })();
   </script>
